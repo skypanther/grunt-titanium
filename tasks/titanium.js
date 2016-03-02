@@ -26,9 +26,9 @@ var GLOBAL_FLAGS = {
 };
 
 // extend fs-extra a bit
-['File','Directory'].forEach(function(type) {
+['File', 'Directory'].forEach(function (type) {
 	var func = 'is' + type;
-	fs[func] = function(o) {
+	fs[func] = function (o) {
 		try {
 			return fs.statSync(o)[func]();
 		} catch (e) {
@@ -37,7 +37,7 @@ var GLOBAL_FLAGS = {
 	};
 });
 
-module.exports = function(grunt) {
+module.exports = function (grunt) {
 
 	var descr = 'grunt plugin to create and launch a Titanium app';
 	grunt.registerMultiTask('titanium_run', descr, executeTitaniumRun);
@@ -88,11 +88,13 @@ module.exports = function(grunt) {
 				noPrompt: true
 			}, opts.build);
 
-		// ensure login, create app, build/run app
+		// create app, build/run app
 		async.series([
-			ensureLogin,
-			function(callback) { return execCommand('create', createOpts, callback); },
-			function(callback) {
+
+			function (callback) {
+				return execCommand('create', createOpts, callback);
+			},
+			function (callback) {
 
 				var dest = path.resolve(buildOpts.projectDir, 'Resources'),
 					appJs = path.resolve(dest, 'app.js'),
@@ -110,7 +112,7 @@ module.exports = function(grunt) {
 				if (!self.files || !self.files.length) {
 					for (var i = 0; i < locations.length; i++) {
 						var loc = locations[i],
-							fileTest = !!(i%2);
+							fileTest = !!(i % 2);
 
 						if (fileTest && fs.isFile(loc)) {
 							fs.copySync(loc, appJs);
@@ -124,9 +126,9 @@ module.exports = function(grunt) {
 
 				// copy all from "files" to destination
 				else {
-					self.files.forEach(function(fileObj) {
+					self.files.forEach(function (fileObj) {
 						var dest = fileObj.dest || dest;
-						fileObj.src.forEach(function(file) {
+						fileObj.src.forEach(function (file) {
 							fs.copySync(file, path.resolve(dest, path.basename(file)));
 						});
 					});
@@ -135,7 +137,7 @@ module.exports = function(grunt) {
 				return callback();
 
 			},
-			function(callback) {
+			function (callback) {
 				buildOpts.success = opts.success;
 				buildOpts.failure = opts.failure;
 				return execCommand('build', buildOpts, callback);
@@ -153,41 +155,33 @@ module.exports = function(grunt) {
 
 		// set default options based on command
 		switch (command) {
-			case 'build':
-				options = this.options(_.extend({
-					logLevel: 'info',
-					platform: process.platform === 'darwin' ? 'ios' : 'android',
-					projectDir: '.'
-				}, GLOBAL_FLAGS));
-				break;
-			case 'create':
-				options = this.options(_.extend({
-					name: 'tmp',
-					id: 'com.grunttitanium.tmp',
-					workspaceDir: '.',
-					platforms: 'android,blackberry,ios,ipad,iphone,mobileweb',
-					quiet: true
-				}, GLOBAL_FLAGS));
+		case 'build':
+			options = this.options(_.extend({
+				logLevel: 'info',
+				platform: process.platform === 'darwin' ? 'ios' : 'android',
+				projectDir: '.'
+			}, GLOBAL_FLAGS));
+			break;
+		case 'create':
+			options = this.options(_.extend({
+				name: 'tmp',
+				id: 'com.grunttitanium.tmp',
+				workspaceDir: '.',
+				platforms: 'android,blackberry,ios,ipad,iphone,mobileweb',
+				quiet: true
+			}, GLOBAL_FLAGS));
 
-				// make sure options.platforms is a string
-				if (_.isArray(options.platforms)) {
-					options.platforms = options.platforms.join(',');
-				}
-				break;
-			default:
-				options = this.options(GLOBAL_FLAGS);
-				break;
+			// make sure options.platforms is a string
+			if (_.isArray(options.platforms)) {
+				options.platforms = options.platforms.join(',');
+			}
+			break;
+		default:
+			options = this.options(GLOBAL_FLAGS);
+			break;
 		}
 
-		// ensure login and execute the command
-		async.series([
-			ensureLogin,
-			function(callback) {
-				return execCommand(command, options, callback);
-			}
-		], function(err, result) {
-			return done(err);
-		});
+		return execCommand(command, options, done);
 
 	}
 
@@ -214,9 +208,13 @@ module.exports = function(grunt) {
 
 		// determine succes and failure types
 		if (_.isRegExp(srcSuccess)) {
-			success = function(data) { return srcSuccess.test(data); };
+			success = function (data) {
+				return srcSuccess.test(data);
+			};
 		} else if (_.isString(srcSuccess)) {
-			success = function(data) { return data.toString().indexOf(srcSuccess) !== -1; };
+			success = function (data) {
+				return data.toString().indexOf(srcSuccess) !== -1;
+			};
 		} else if (_.isFunction(srcSuccess)) {
 			success = srcSuccess;
 		} else if (!!success) {
@@ -225,9 +223,13 @@ module.exports = function(grunt) {
 		}
 
 		if (_.isRegExp(srcFailure)) {
-			failure = function(data) { return srcFailure.test(data); };
+			failure = function (data) {
+				return srcFailure.test(data);
+			};
 		} else if (_.isString(srcFailure)) {
-			failure = function(data) { return data.toString().indexOf(srcFailure) !== -1; };
+			failure = function (data) {
+				return data.toString().indexOf(srcFailure) !== -1;
+			};
 		} else if (_.isFunction(srcFailure)) {
 			failure = srcFailure;
 		} else if (!!failure) {
@@ -236,13 +238,15 @@ module.exports = function(grunt) {
 		}
 
 		// create the list of command arguments
-		Object.keys(options).forEach(function(key) {
+		Object.keys(options).forEach(function (key) {
 			var value = options[key],
 				isBool = _.isBoolean(value);
 			if (!isBool || (isBool && !!value)) {
 				args.push(camelCaseToDash(key));
 			}
-			if (!isBool) { args.push(value); }
+			if (!isBool) {
+				args.push(value);
+			}
 		});
 		args.unshift(command);
 
@@ -251,8 +255,9 @@ module.exports = function(grunt) {
 
 		// spawn command and output
 		grunt.log.writeln('titanium ' + args.join(' '));
-		var tiOpts = process.env.GRUNT_TITANIUM_TEST || success || failure ?
-				{} : {stdio: 'inherit'},
+		var tiOpts = process.env.GRUNT_TITANIUM_TEST || success || failure ? {} : {
+				stdio: 'inherit'
+			},
 			ti = spawn(getTitaniumPath(preferGlobal), args, tiOpts);
 
 		// prepare functions for killing this process
@@ -276,7 +281,7 @@ module.exports = function(grunt) {
 		}
 
 		// handle titanium's exit
-		ti.on('close', function(code) {
+		ti.on('close', function (code) {
 			if (command !== 'build' || options.buildOnly) {
 				if (code) {
 					grunt.fail.fatal('titanium ' + command + ' failed.');
@@ -292,23 +297,10 @@ module.exports = function(grunt) {
 			var testFile = path.resolve('tmp', preferGlobal ? 'tmp_global.txt' : 'tmp.txt');
 			grunt.file.mkdir(path.dirname(testFile));
 			fs.writeFileSync(testFile, '');
-			ti.stdout.on('data', function(data) {
+			ti.stdout.on('data', function (data) {
 				fs.appendFileSync(testFile, data);
 			});
 		}
-	}
-
-	// ensure appc user is logged in
-	function ensureLogin(callback) {
-		exec('"' + getTitaniumPath() + '" status -o json', function(err, stdout, stderr) {
-			if (err) { return callback(err); }
-			if (!JSON.parse(stdout).loggedIn) {
-				grunt.fail.fatal([
-					'You must be logged in to use grunt-titanium. Use `titanium login`.'
-				]);
-			}
-			return callback();
-		});
 	}
 
 };
@@ -324,9 +316,11 @@ function getTitaniumPath(preferGlobal) {
 }
 
 function copyToApp(src, dest, callback) {
-	readdir(src, function(err, files) {
-		if (err) { return callback(err); }
-		files.forEach(function(file) {
+	readdir(src, function (err, files) {
+		if (err) {
+			return callback(err);
+		}
+		files.forEach(function (file) {
 			fs.copySync(file, path.resolve(dest, path.relative(src, file)));
 		});
 		return callback();
@@ -334,6 +328,10 @@ function copyToApp(src, dest, callback) {
 }
 
 function camelCaseToDash(str) {
-	if (typeof str !== 'string') { return str; }
-	return '--' + str.replace(/([A-Z])/g, function(m) { return '-' + m.toLowerCase(); });
+	if (typeof str !== 'string') {
+		return str;
+	}
+	return '--' + str.replace(/([A-Z])/g, function (m) {
+		return '-' + m.toLowerCase();
+	});
 }
