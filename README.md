@@ -2,6 +2,20 @@
 
 grunt plugin for titanium CLI
 
+---
+**Unofficial/unsupported** fix for the login issue on the source project. 
+
+If you already have grunt-titanium installed:
+
+1. Delete the node_modules folder from your Titanium project
+2. Modify the package.json file in your Titanium project's folder to *remove* grunt-titanium as a dependency.
+3. In your Titanium project's directory, run `npm install` to install all the other dependencies
+4. In your Titanium project's directory, run `npm install git://github.com/skypanther/grunt-titanium.git --save-dev`
+
+If you don't already have grunt-titanium set up, follow Tony's instructions below. But, use the npm install command I give above instead so that you install this version rather than the published version.
+
+---
+
 ## Getting Started
 This plugin requires Grunt `~0.4.2`
 
